@@ -20,6 +20,11 @@ typedef struct __twiRxBuf_t
     uint8_t buffer[TWI_MAX_BUF];    
 } twiRxBuf_t;
 
+#define TWI_RX_Receiving        0x01
+#define TWI_RX_RecvCompleted    0x02
+#define TWI_RX_DataOverflow     0x04
+#define TWI_RX_DataFromGC       0x08
+
 // Buffer used to send data
 typedef struct __twiTxBuf_t
 {
@@ -39,6 +44,9 @@ typedef struct __twiTxBuf_t
     // Buffer from where to send data
     uint8_t buffer[TWI_MAX_BUF];    
 } twiTxBuf_t;
+
+#define TWI_TX_Sending          0x01
+#define TWI_TX_SendCompleted    0x02
 
 // Initialize
 void twiInit(uint8_t slaveAddress);

@@ -70,7 +70,7 @@ bool twiRecv(twiRxBuf_t* recvBuf)
 {
     bool received = false;
 
-    if (g_rxBuf.status & 0x02)
+    if (g_rxBuf.status & TWI_RX_RecvCompleted)
     {
         memcpy((void *)recvBuf, (void *)&g_rxBuf, sizeof(twiRxBuf_t));
         memset((void *)&g_rxBuf, 0, sizeof(g_rxBuf));
@@ -93,7 +93,7 @@ bool twiSend(twiTxBuf_t* sendBuf)
         memcpy((void *)&g_txBuf, (void *)sendBuf, sizeof(twiTxBuf_t));
         g_ctx.twiSending = true;
         g_txBuf.size = 0;
-        g_txBuf.status = 0x01;
+        g_txBuf.status = TWI_TX_Sending;
         started = true;
         if (!g_ctx.twiReceiving)
         {
@@ -116,6 +116,9 @@ bool twiSend(twiTxBuf_t* sendBuf)
 void ISR_Twi(void)
 {
     uint8_t data;
+    // Note the different states purposely left with its hex value
+    // to match the Data Sheet documentation in section:
+    // "2-Wire Serial Interface" / "Transmission Modes"
     volatile uint8_t twsr = TWSR & 0xf8; // Keep only the status bits
 
     switch(twsr)
@@ -159,11 +162,11 @@ void ISR_Twi(void)
                 SerialPrLn(("! 0x80 Unexpected data"));
                 g_ctx.twiReceiving = true;
             }
-            if (g_rxBuf.status & 0x2)
+            if (g_rxBuf.status & TWI_RX_RecvCompleted)
             {
                 // We had completed data already, discard it
                 SerialPrLn(("! 0x80 Previous packet being lost"));
-                g_rxBuf.status = 0x01;
+                g_rxBuf.status = TWI_RX_Receiving;
                 g_rxBuf.size = 0;
             }
             if (g_rxBuf.size < TWI_MAX_BUF)
@@ -174,7 +177,7 @@ void ISR_Twi(void)
             else
             {
                 // Overflow
-                g_rxBuf.status |= 0x04;
+                g_rxBuf.status |= TWI_RX_DataOverflow;
             }
             break;
         case 0x90:
@@ -188,14 +191,14 @@ void ISR_Twi(void)
                 SerialPrLn(("! 0x90 Unexpected data"));
                 g_ctx.twiReceiving = true;
             }
-            if (g_rxBuf.status & 0x2)
+            if (g_rxBuf.status & TWI_RX_RecvCompleted)
             {
                 // We had completed data already, discard it
                 SerialPrLn(("! 0x90 Previous packet being lost"));
-                g_rxBuf.status = 0x01;
+                g_rxBuf.status = TWI_RX_Receiving;
                 g_rxBuf.size = 0;
             }
-            g_rxBuf.status |= 0x08;
+            g_rxBuf.status |= TWI_RX_DataFromGC;
             if (g_rxBuf.size < TWI_MAX_BUF)
             {
                 g_rxBuf.buffer[g_rxBuf.size] = data;
@@ -204,7 +207,7 @@ void ISR_Twi(void)
             else
             {
                 // Overflow
-                g_rxBuf.status |= 0x04;
+                g_rxBuf.status |= TWI_RX_DataOverflow;
                 SerialPrLn(("! 0x90 Data reception overflow"));
             }
             break;
@@ -213,7 +216,7 @@ void ISR_Twi(void)
             if (g_ctx.twiReceiving)
             {
                 // Completed reception (STOP received)
-                g_rxBuf.status |= 0x2;
+                g_rxBuf.status |= TWI_RX_RecvCompleted;
                 SerialPrLn2(("* 0xa0 Data reception complete"));
                 g_ctx.twiReceiving = false;
             }
@@ -325,7 +328,7 @@ void ISR_Twi(void)
                     TWCR = TWCR_MASK_READY | b2m(TWCR_BIT_TWINT) | b2m(TWCR_BIT_TWSTO);
                     // We can now accept another packet to send
                     g_ctx.twiSending = false;
-                    g_txBuf.status |= 0x02;
+                    g_txBuf.status |= TWI_TX_SendCompleted;
                 }
             }
             else
