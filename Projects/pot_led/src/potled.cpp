@@ -62,7 +62,7 @@ void ISR_Timer1_CompB(void)
     twiTxBuf_t sendBuf;
     
 
-    // First read data if available
+    // First read AD data if available
     if (ADCSRA & b2m(ADCSRA_BIT_ADIF))
     {
         // We have an AD sample
@@ -96,15 +96,15 @@ void ISR_Timer1_CompB(void)
         // Manually reset interrupt flag as we don't have 
         // ADC interrupts enabled nor corresponding ISR
         ADCSRA |= b2m(ADCSRA_BIT_ADIF);
+    }
 
-        // Find out if we have received any data
-        if (twiRecv(&recvBuf) && recvBuf.size == 4)
-        {
-            // ... and we have.
-            // Update duty cycle
-            OCR1A = step[recvBuf.buffer[3] & 0x3f];
-            SerialPrLn(("Received packet"));
-        }
+    // Find out if we have received any data
+    if (twiRecv(&recvBuf) && recvBuf.size == 4)
+    {
+        // ... and we have.
+        // Update duty cycle
+        OCR1A = step[recvBuf.buffer[3] & 0x3f];
+        SerialPrLn(("Received packet"));
     }
 
     count++;
