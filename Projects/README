@@ -6,21 +6,21 @@ Arduino libraries (as much as practical).
 
 The directories are listed here in chronological as well as complexity order.
 
-Hardware:
-+Devices Uno and Mega 2560 where connected to PC via USB ports (no external power supply used). 
+Hardware setup:
++ Devices Uno and Mega 2560 were connected to PC via USB ports (no external power supply used). 
   For some experiments, the following hardware was added on a breadboard:
 + Connected a linear 10 KOhm potentiometer to Vcc/Gnd, and its center terminal to ADC0 pin (for ADC).
 + Connected external LED with 1 KOhm current limiting resistor on OC1A (to control duty cycle). 
   At 1 KHz, the perceived LED brightness is near its maximum at 20% duty cycle.
-+ Interconnected both boards via their I2C terminals, I2C bus has one 10 KOhm pull-up resistor 
-  in each line.
++ Interconnected both boards via their TWI (I2C) terminals, added to I2C bus one 10 KOhm 
+  pull-up resistor to each line.
 
 * tmega-pwm
   Program the 3 different PWM modes into 3 different timers and observe the wave form generated.
   Timer 1 (Fast PWM mode) makes the external LED pulsate.
 
 * tmega-adc
-  Program timer 1 to trigger an AD conversions every 100ms. ADC programmed in auto trigger 
+  Program timer 1 to trigger an AD conversion every 100ms. ADC programmed in auto trigger 
   (from timer 1 OC1B) and its ISR reads the AD converted value which is logged via the serial monitor.
 
 * tmega-potled
